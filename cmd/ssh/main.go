@@ -44,6 +44,7 @@ func main() {
 		wish.WithAuthorizedKeys(".ssh/authorized_keys"),
 		wish.WithMiddleware(
 			bubbletea.Middleware(teaHandler),
+			bubbletea.Middleware(teaHandler),
 			activeterm.Middleware(), // Bubble Tea apps usually require a PTY.
 			logging.Middleware(),
 		),
