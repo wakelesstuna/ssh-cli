@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"wakelesstuna/cmd/option"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/ssh"
 )
 
 const listHeight = 14
@@ -50,22 +52,23 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 
 type model struct {
 	list     list.Model
+	session  ssh.Session
 	choice   string
 	quitting bool
 }
 
-func InitModel(items []list.Item) tea.Model {
+func InitModel(title string, items []list.Item, session ssh.Session) tea.Model {
 	const defaultWidth = 20
 
 	l := list.New(items, itemDelegate{}, defaultWidth, listHeight)
-	l.Title = "What do you want for dinner?"
+	l.Title = title
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.Styles.Title = titleStyle
 	l.Styles.PaginationStyle = paginationStyle
 	l.Styles.HelpStyle = helpStyle
 
-	return model{list: l}
+	return model{list: l, session: session}
 }
 
 func (m model) Init() tea.Cmd {
@@ -88,6 +91,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			i, ok := m.list.SelectedItem().(Item)
 			if ok {
 				m.choice = string(i)
+				m.session.Context().SetValue(option.OptionsKey, option.Options{Choice: m.choice})
 			}
 			return m, tea.Quit
 		}
@@ -105,5 +109,6 @@ func (m model) View() string {
 	if m.quitting {
 		return quitTextStyle.Render("Not hungry? That’s cool.")
 	}
+	fmt.Println(m.session.Context().Value(option.OptionsKey))
 	return "\n" + m.list.View()
 }

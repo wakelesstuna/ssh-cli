@@ -1,4 +1,4 @@
-module github.com/wakelesstuna
+module wakelesstuna
 
 go 1.21.5
 
