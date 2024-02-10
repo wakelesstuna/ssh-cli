@@ -15,14 +15,15 @@ import (
 
 	_ "embed"
 
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
 	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
 	"github.com/charmbracelet/wish/logging"
+	"github.com/wakelesstuna/pkg/views"
 )
 
 const (
@@ -76,8 +77,12 @@ func main() {
 // tea.WithAltScreen) on a session by session basis.
 func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	// This should never fail, as we are using the activeterm middleware.
-	pty, _, _ := s.Pty()
+	_, _, active := s.Pty()
 
+	if !active {
+		wish.Fatalln(s, "no active terminal, skipping")
+		return nil, nil
+	}
 	// When running a Bubble Tea app over SSH, you shouldn't use the default
 	// lipgloss.NewStyle function.
 	// That function will use the color profile from the os.Stdin, which is the
@@ -87,48 +92,35 @@ func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 	// use it to create the styles.
 	// The recommended way to use these styles is to then pass them down to
 	// your Bubble Tea model.
-	renderer := bubbletea.MakeRenderer(s)
+	/*renderer := bubbletea.MakeRenderer(s)
 	txtStyle := renderer.NewStyle().Foreground(lipgloss.Color("10"))
-	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8"))
+	quitStyle := renderer.NewStyle().Foreground(lipgloss.Color("8")) */
 
-	m := model{
+	/* m := model{
 		term:      pty.Term,
 		width:     pty.Window.Width,
 		height:    pty.Window.Height,
 		txtStyle:  txtStyle,
 		quitStyle: quitStyle,
+	} */
+
+	items := []list.Item{
+		views.Item("Ramen"),
+		views.Item("Tomato Soup"),
+		views.Item("Hamburgers"),
+		views.Item("Cheeseburgers"),
+		views.Item("Currywurst"),
+		views.Item("Okonomiyaki"),
+		views.Item("Pasta"),
+		views.Item("Fillet Mignon"),
+		views.Item("Caviar"),
+		views.Item("Just Wine"),
 	}
-	return m, []tea.ProgramOption{tea.WithAltScreen()}
-}
 
-// Just a generic tea.Model to demo terminal information of ssh.
-type model struct {
-	term      string
-	width     int
-	height    int
-	txtStyle  lipgloss.Style
-	quitStyle lipgloss.Style
-}
+	m := views.InitModel(items)
 
-func (m model) Init() tea.Cmd {
-	return nil
-}
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.height = msg.Height
-		m.width = msg.Width
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "q", "ctrl+c":
-			return m, tea.Quit
-		}
+	return m, []tea.ProgramOption{
+		tea.WithInput(s),
+		tea.WithOutput(s),
 	}
-	return m, nil
-}
-
-func (m model) View() string {
-	s := fmt.Sprintf("Your term is %s\nYour window size is %dx%d", m.term, m.width, m.height)
-	return m.txtStyle.Render(s) + "\n\n" + m.quitStyle.Render("Press 'q' to quit\n")
 }
