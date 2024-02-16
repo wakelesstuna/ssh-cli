@@ -54,6 +54,13 @@ func newLongQuestion(q string) Question {
 	return question
 }
 
+func newListChoice() Question {
+	question := newQuestion("")
+	model := NewListAnswerField()
+	question.input = model
+	return question
+}
+
 func New(questions []Question) *Main {
 	styles := DefaultStyles()
 	return &Main{styles: styles, questions: questions}
@@ -133,6 +140,7 @@ func InitTerminalWizard(s ssh.Session) *tea.Program { //(tea.Model, []tea.Progra
 	questions := []Question{
 		newShortQuestion("what is your name?"),
 		newShortQuestion("what is your favourite editor?"),
+		newListChoice(),
 		newLongQuestion("what's your favourite quote?"),
 	}
 	main := New(questions)

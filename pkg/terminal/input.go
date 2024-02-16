@@ -1,8 +1,13 @@
 package terminal
 
 import (
+	"bytes"
+	"fmt"
+	"wakelesstuna/pkg/ui/list"
+
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -115,4 +120,65 @@ func (a *longAnswerField) Blur() tea.Msg {
 
 func (a *longAnswerField) Value() string {
 	return a.textarea.Value()
+}
+
+type listAnswerField struct {
+	list list.Model
+}
+
+func NewListAnswerField() *listAnswerField {
+	a := listAnswerField{}
+
+	model := list.InitialModel()
+	a.list = model
+	return &a
+}
+
+func (a *listAnswerField) Blink() tea.Msg {
+	return textarea.Blink()
+}
+
+func (a *listAnswerField) Init() tea.Cmd {
+	return nil
+}
+
+func (a *listAnswerField) Update(msg tea.Msg) (Input, tea.Cmd) {
+	var cmd tea.Cmd
+	var model tea.Model
+	model, cmd = a.list.Update(msg)
+	a.list, _ = model.(list.Model) // Perform type assertion here
+	return a, cmd
+}
+
+func (a *listAnswerField) View() string {
+	return a.list.View()
+}
+
+func (a *listAnswerField) Focus() tea.Cmd {
+	return nil
+	// return a.list.Focus()
+}
+
+func (a *listAnswerField) SetValue(s string) {
+	// do nothing
+	// a.list.SetValue(s)
+}
+
+func (a *listAnswerField) Blur() tea.Msg {
+	return nil
+	//return a.list.Blur()
+}
+
+func (a *listAnswerField) Value() string {
+	fmt.Println()
+	return createValuePairs(a.list.Selected())
+	//return a.list.Value()
+}
+
+func createValuePairs(m map[int]string) string {
+	b := new(bytes.Buffer)
+	for key, value := range m {
+		fmt.Fprintf(b, "%d=\"%s\"\n", key, value)
+	}
+	return b.String()
 }
