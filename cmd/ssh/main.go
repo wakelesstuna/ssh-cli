@@ -15,7 +15,7 @@ import (
 
 	_ "embed"
 
-	"wakelesstuna/cmd/program"
+	"wakelesstuna/pkg/terminal"
 
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/ssh"
@@ -23,6 +23,7 @@ import (
 	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
 	"github.com/charmbracelet/wish/logging"
+	"github.com/muesli/termenv"
 )
 
 const (
@@ -34,6 +35,7 @@ const (
 var banner string
 
 func main() {
+	t := termenv.ColorProfile()
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
@@ -42,8 +44,7 @@ func main() {
 		}),
 		wish.WithAuthorizedKeys(".ssh/authorized_keys"),
 		wish.WithMiddleware(
-			bubbletea.Middleware(program.MainHandler),
-			bubbletea.Middleware(program.MainHandler),
+			bubbletea.MiddlewareWithProgramHandler(terminal.InitTerminalWizard, t),
 			activeterm.Middleware(), // Bubble Tea apps usually require a PTY.
 			logging.Middleware(),
 		),
