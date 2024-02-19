@@ -23,6 +23,7 @@ import (
 	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
 	"github.com/charmbracelet/wish/logging"
+	"github.com/joho/godotenv"
 	"github.com/muesli/termenv"
 )
 
@@ -35,6 +36,11 @@ const (
 var banner string
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	t := termenv.ColorProfile()
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),

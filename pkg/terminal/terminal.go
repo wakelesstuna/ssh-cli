@@ -2,6 +2,9 @@ package terminal
 
 import (
 	"fmt"
+	"log"
+	"wakelesstuna/pkg/git"
+	"wakelesstuna/pkg/github"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -28,6 +31,7 @@ type Main struct {
 	width     int
 	height    int
 	done      bool
+	gitUrl    string
 }
 
 type Question struct {
@@ -84,6 +88,7 @@ func (m Main) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			if m.index == len(m.questions)-1 {
 				m.done = true
+				m.gitUrl = DoStuff(m)
 			}
 			current.answer = current.input.Value()
 			m.Next()
@@ -97,11 +102,7 @@ func (m Main) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Main) View() string {
 	current := m.questions[m.index]
 	if m.done {
-		var output string
-		for _, q := range m.questions {
-			output += fmt.Sprintf("%s: %s\n", q.question, q.answer)
-		}
-		return output
+		return fmt.Sprintf("Repo created! @ --> %s\n", m.gitUrl)
 	}
 	if m.width == 0 {
 		return "loading..."
@@ -118,6 +119,21 @@ func (m Main) View() string {
 			m.styles.InputField.Render(current.input.View()),
 		),
 	)
+}
+
+func DoStuff(m Main) string {
+	projectDir := "C://Users/oscfor/gc/fun/ssh-cli/temp-project"
+	gitUrl, err := github.CreateRepository(m.questions[0].answer, m.questions[1].answer)
+	if err != nil {
+		log.Fatalf("Error creating git repo: %s", err)
+	}
+
+	err = git.GitAddCommitPush(gitUrl, projectDir)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	return gitUrl
 }
 
 func (m *Main) Next() {
@@ -138,10 +154,10 @@ func InitTerminalWizard(s ssh.Session) *tea.Program { //(tea.Model, []tea.Progra
 	}
 
 	questions := []Question{
-		newShortQuestion("what is your name?"),
-		newShortQuestion("what is your favourite editor?"),
-		newListChoice(),
-		newLongQuestion("what's your favourite quote?"),
+		newShortQuestion("Enter the name of your new github repo?"),
+		newShortQuestion("Add an description?"),
+		//newListChoice(),
+		//newLongQuestion("what's your favourite quote?"),
 	}
 	main := New(questions)
 

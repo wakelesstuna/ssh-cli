@@ -1,0 +1,1 @@
+this is a template readme for trying out generating a project thro go and create a repo
